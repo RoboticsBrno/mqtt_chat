@@ -6,7 +6,6 @@ import os
 import sys
 import uuid
 from datetime import datetime
-from typing import TypedDict
 
 import aiomqtt
 from rich.markup import escape
@@ -14,6 +13,7 @@ from textual import events
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Input, Label, TextLog
+from typing_extensions import TypedDict
 
 from animals import ANIMALS
 
