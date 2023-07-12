@@ -18,7 +18,7 @@ from textual.widgets import Input, Label, TextLog
 from animals import ANIMALS
 
 MQTT_HOST = "mqtt.lan"
-MQTT_TOPIC = "robotika/chat"
+MQTT_TOPIC = "robotabor2023/chat"
 
 COLORS = [
     "red",
