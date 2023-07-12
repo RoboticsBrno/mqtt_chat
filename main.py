@@ -96,7 +96,8 @@ class ChatApp(App[None]):
         self.query_one(TextLog).write(line)
 
     def _on_publish_done(self, task: asyncio.Task[None]) -> None:
-        if ex := task.exception():
+        ex = task.exception()
+        if ex is not None:
             self.query_one(
                 "#error", Label
             ).renderable = f"[bold red]Error: failed to send message: {ex}[/bold red]"
