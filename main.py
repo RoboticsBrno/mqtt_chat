@@ -12,6 +12,7 @@ import aiomqtt
 from rich.markup import escape
 from textual import events
 from textual.app import App, ComposeResult
+from textual.containers import Horizontal, Vertical
 from textual.widgets import Input, Label, TextLog
 
 from animals import ANIMALS
@@ -51,17 +52,33 @@ class MqttMessage(TypedDict):
 
 
 class ChatApp(App[None]):
+    CSS = """
+#message-bar {
+    height: auto;
+}
+#my-name {
+    content-align-vertical: middle;
+    height: 100%;
+}
+"""
+
     def __init__(self, client: aiomqtt.Client) -> None:
         super().__init__()
         self._client = client
 
     def compose(self) -> ComposeResult:
-        yield TextLog(
-            wrap=True,
-            markup=True,
-        )
-        yield Input(placeholder="Napis zpravu...")
-        yield Label(expand=True, id="error")
+        with Vertical():
+            yield TextLog(
+                wrap=True,
+                markup=True,
+            )
+            with Horizontal(id="message-bar"):
+                yield Label(
+                    f"<[bold {MY_COLOR}]{escape(MY_ANIMAL)}[/bold {MY_COLOR}]>",
+                    id="my-name",
+                )
+                yield Input(placeholder="Napis zpravu...")
+            yield Label(expand=True, id="error")
 
     def on_mount(self, _event: events.Mount) -> None:
         self.query_one(Input).focus()
@@ -71,7 +88,11 @@ class ChatApp(App[None]):
         if msg["color"] not in COLORS:
             msg["color"] = "white"
 
-        line = f"[grey]{ts}[/grey] <[bold {msg['color']}]{escape(msg['animal'])}[/bold {msg['color']}]>: {escape(msg['message'])}"
+        ex = ""
+        if msg["id"] == MY_ID:
+            ex = "underline"
+
+        line = f"[grey]{ts}[/grey] <[bold {ex} {msg['color']}]{escape(msg['animal'])}[/bold {ex} {msg['color']}]>: {escape(msg['message'])}"
         self.query_one(TextLog).write(line)
 
     def _on_publish_done(self, task: asyncio.Task[None]) -> None:
@@ -118,7 +139,8 @@ async def reader_routine(client: aiomqtt.Client, app: ChatApp) -> None:
 async def main() -> None:
     async with aiomqtt.Client(MQTT_HOST) as client:
         app = ChatApp(client)
-        await asyncio.gather(app.run_async(), reader_routine(client, app))
+        asyncio.create_task(reader_routine(client, app))
+        await app.run_async()
 
 
 if __name__ == "__main__":
