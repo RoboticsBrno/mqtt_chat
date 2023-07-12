@@ -95,7 +95,7 @@ class ChatApp(App[None]):
         line = f"[grey]{ts}[/grey] <[bold {ex} {msg['color']}]{escape(msg['animal'])}[/bold {ex} {msg['color']}]>: {escape(msg['message'])}"
         self.query_one(TextLog).write(line)
 
-    def _on_publish_done(self, task: asyncio.Task[None]) -> None:
+    def _on_publish_done(self, task: "asyncio.Task[None]") -> None:
         ex = task.exception()
         if ex is not None:
             self.query_one(
