@@ -66,11 +66,15 @@ class ChatApp(App[None]):
         super().__init__()
         self._client = client
 
+        self._log_file = open("./log.txt", "r+")
+
     def compose(self) -> ComposeResult:
         with Vertical():
             yield TextLog(
                 wrap=True,
                 markup=True,
+                auto_scroll=False,
+                max_lines=5000,
             )
             with Horizontal(id="message-bar"):
                 yield Label(
@@ -82,6 +86,7 @@ class ChatApp(App[None]):
 
     def on_mount(self, _event: events.Mount) -> None:
         self.query_one(Input).focus()
+        self.query_one(TextLog).write(self._log_file.read(), scroll_end=True)
 
     def on_message(self, msg: MqttMessage) -> None:
         ts = datetime.now().strftime("%H:%M:%S")
@@ -93,7 +98,16 @@ class ChatApp(App[None]):
             ex = "underline"
 
         line = f"[grey]{ts}[/grey] <[bold {ex} {msg['color']}]{escape(msg['animal'])}[/bold {ex} {msg['color']}]>: {escape(msg['message'])}"
-        self.query_one(TextLog).write(line)
+        self._log_file.write(line + "\n")
+        self._log_file.flush()
+
+        tl = self.query_one(TextLog)
+        tl.write(
+            line,
+            scroll_end=(
+                msg["animal"] == MY_ANIMAL or tl.scroll_offset.y == tl.max_scroll_y
+            ),
+        )
 
     def _on_publish_done(self, task: "asyncio.Task[None]") -> None:
         ex = task.exception()
@@ -111,7 +125,7 @@ class ChatApp(App[None]):
             "id": MY_ID,
             "color": MY_COLOR,
             "animal": MY_ANIMAL,
-            "message": event.value,
+            "message": event.value.replace("\\n", "\n"),
         }
 
         task = asyncio.create_task(
