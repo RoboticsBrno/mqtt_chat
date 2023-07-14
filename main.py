@@ -66,7 +66,10 @@ class ChatApp(App[None]):
         super().__init__()
         self._client = client
 
-        self._log_file = open("./log.txt", "r+")
+        try:
+            self._log_file = open("./log.txt", "r+")
+        except FileNotFoundError:
+            self._log_file = open("./log.txt", "a+")
 
     def compose(self) -> ComposeResult:
         with Vertical():
