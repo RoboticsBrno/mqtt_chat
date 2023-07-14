@@ -132,7 +132,7 @@ class ChatApp(App[None]):
         }
 
         task = asyncio.create_task(
-            self._client.publish(MQTT_TOPIC, json.dumps(msg).encode("utf-8"))
+            self._client.publish(MQTT_TOPIC, json.dumps(msg).encode("utf-8"), qos=1)
         )
         task.add_done_callback(self._on_publish_done)
 
@@ -141,7 +141,7 @@ class ChatApp(App[None]):
 
 async def reader_routine(client: aiomqtt.Client, app: ChatApp) -> None:
     async with client.messages() as messages:
-        await client.subscribe(MQTT_TOPIC)
+        await client.subscribe(MQTT_TOPIC, qos=1)
         async for raw_msg in messages:
             if not isinstance(raw_msg.payload, bytes):
                 continue
